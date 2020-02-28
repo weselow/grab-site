@@ -17,7 +17,19 @@ if ! [ -d "$InProgressDir/" ]; then mkdir "$InProgressDir/" ; fi
 if ! [ -d "$DoneDir/" ]; then mkdir "$DoneDir/" ; fi
 
 # run free disk checker
-pause_resume_grab_sites.sh &
+GT=$(ps -ela | grep pause_resume_grab_sites.sh)
+if [ -z "$GT" ] 
+	then 
+		echo 
+		echo Running pause_resume_grab_sites.sh ...
+		echo 
+		pause_resume_grab_sites.sh & 
+	else
+		echo 
+		echo Script pause_resume_grab_sites.sh already running, skipping...
+		echo 
+fi
+
 
 # while [ "1" -eq "1" ]; do
 	for i in $(find $NotStartedDir -name '*.txt'); 

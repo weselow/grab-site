@@ -56,7 +56,7 @@ grab-site http://$domain \
 	--id=$id \
 	--dir=$dir \
 	--finished-warc-dir=$outputdir \
-	--wpull-args="\"--html-parser html5lib\" --no-clobber --strip-session-id" >> $LogFile 2>> $LogErrorFile
+	--wpull-args="\"--html-parser html5lib\" --no-clobber --strip-session-id" 2> $LogErrorFile > $LogFile
 
 # exec 1>&6 6>&- # Восстановить stdout и закрыть дескр. #6.
 

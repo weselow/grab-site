@@ -4,6 +4,8 @@
 # source: https://github.com/ArchiveTeam/grab-site
 # 
 
+# $RunScriptDir/run-grab-site.sh $domain $domainid $InProgressDir/$domain.txt $DoneDir/$domain.txt $i $LogDir &	
+
 domain=$1
 domainid=$2
 useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36"
@@ -14,8 +16,11 @@ outputdir=$exportdir/${dt}_${domain}_${domainid}
 FileInProgress=$3
 FileDone=$4
 FileNotStarted=$5
-LogFile="$exportdir/$domain.log"
-LogErrorFile="$exportdir/$domain_errors.log"
+
+# Log settings
+LogDir=$6
+LogFile=$LogDir/$domain.log
+LogErrorFile=$LogDir/${domain}_errors.log
 
 # exec 6>&1 # Связать дескр. #6 со stdout.
 # exec > $exportdir/$domain.log
@@ -43,20 +48,20 @@ echo ... done!
 echo
 
 echo
-echo Staring grabbing...
+echo Staring grabbing $domain ...
 echo
 
 mv $FileNotStarted $FileInProgress
 
-grab-site http://$domain \
-	--level=3 \
+grab-site --level=3 \
 	--concurrency=3 \
 	--delay 1 \
 	--ua="$useragent" \
 	--id=$id \
 	--dir=$dir \
 	--finished-warc-dir=$outputdir \
-	--wpull-args="\"--html-parser html5lib\" --no-clobber --strip-session-id" 2> $LogErrorFile > $LogFile
+	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \
+	http://$domain  2> $LogErrorFile >> $LogFile
 
 # exec 1>&6 6>&- # Восстановить stdout и закрыть дескр. #6.
 

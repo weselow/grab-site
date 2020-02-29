@@ -6,41 +6,56 @@ NotStartedDir=/home/viking01/data/NotStarted
 InProgressDir=/home/viking01/data/InProgress
 DoneDir=/home/viking01/data/Done
 JobsCounter=0
-MaxTasks=15
+MaxTasks=20
 MyProcess=run-grab-site
 MY_PID=$$
 RunScriptDir="/home/viking01"
+
+# Log settings
+LogDir=/home/viking01/data/logs
 
 # проверяем наличие директорий
 if ! [ -d "$NotStartedDir/" ]; then mkdir "$NotStartedDir/" ; fi
 if ! [ -d "$InProgressDir/" ]; then mkdir "$InProgressDir/" ; fi
 if ! [ -d "$DoneDir/" ]; then mkdir "$DoneDir/" ; fi
+if ! [ -d "$LogDir/" ]; then mkdir "$LogDir/" ; fi
+
+# run gs-server
+GT=$(ps -ela | grep gs-server)
+if [ -z "$GT" ] 
+	then 
+		echo 
+		echo [LOADER] Running gs-server ...
+		gs-server 2>>$LogDir/gs-server-errors.log >>$LogDir/gs-server.log & 
+	else
+		echo 
+		echo [LOADER] GS-server already running, skipping...
+fi
 
 # run free disk checker
 GT=$(ps -ela | grep pause_resume_grab_sites.sh)
 if [ -z "$GT" ] 
 	then 
 		echo 
-		echo Running pause_resume_grab_sites.sh ...
-		echo 
-		pause_resume_grab_sites.sh & 
+		echo [LOADER] Running pause_resume_grab_sites.sh ...
+		/home/viking01/pause_resume_grab_sites.sh & 
 	else
 		echo 
-		echo Script pause_resume_grab_sites.sh already running, skipping...
-		echo 
+		echo [LOADER] Script pause_resume_grab_sites.sh already running, skipping...
 fi
 
+echo 
 
 # while [ "1" -eq "1" ]; do
 	for i in $(find $NotStartedDir -name '*.txt'); 
 	do 
-		echo "File found: " $i
+		# echo "File found: " $i
 
 		if [ -e $i ]; then
 			# если файл существует
 			if [ -s $i ]; then
 				# Файл содержит данные.
-				echo "Файл $i содержит данные."
+				# echo "Файл $i содержит данные."
 				domainid=$(cat $i | awk -F':' '{print $1}')
 				domain=$(cat $i | awk -F':' '{print $2}' | tr -d '\n' | tr -d '\r')
 				
@@ -57,9 +72,7 @@ fi
 
 				# запускаем наш скрипт
 				echo Running domain: $domain
-				# echo domain $domain
-				# echo domainid $domainid
-				$RunScriptDir/run-grab-site.sh $domain $domainid $InProgressDir/$domain.txt $DoneDir/$domain.txt $i &				
+				$RunScriptDir/run-grab-site.sh $domain $domainid $InProgressDir/$domain.txt $DoneDir/$domain.txt $i $LogDir &				
 
 			else
 				# Файл пустой.

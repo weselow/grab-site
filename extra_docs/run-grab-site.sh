@@ -9,7 +9,7 @@
 domain=$1
 domainid=$2
 useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36"
-dir=/home/viking01/data/tmp/$domain
+dir=/home/viking01/grab-site_tmp/$domain
 dt=$(date +"%Y-%m-%d")
 exportdir=/home/viking01/data/export_grab-site
 outputdir=$exportdir/${dt}_${domain}_${domainid}

@@ -4,48 +4,72 @@
 # source: https://github.com/ArchiveTeam/grab-site
 #
 
-# $RunScriptDir/run-grab-site.sh $domain $domainid $InProgressDir/$domain.txt $DoneDir/$domain.txt $i $LogDir &
-
+# $RunScriptDir/run-grab-site.sh $domain $domainid $i &
 domain=$1
 domainid=$2
-useragent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36"
-dir=/home/viking01/grab-site_tmp/$domain
-dt=$(date +"%Y-%m-%d")
-exportdir=/home/viking01/data/export_grab-site
-outputdir=$exportdir/${dt}_${domain}_${domainid}
-FileInProgress=$3
-FileDone=$4
-FileNotStarted=$5
+FileNotStarted=$3
 
-# Log settings
-LogDir=$6
-LogFile=$LogDir/$domain.log
-LogErrorFile=$LogDir/${domain}_errors.log
-
-# exec 6>&1 # Связать дескр. #6 со stdout.
+# exec 6>&1 # Link Descriptor #6 to stdout.
 # exec > $exportdir/$domain.log
 
 
-#создаем директорию
+# Functions start
+function LoadSettings {
+	if [[ -e "loader.ini" ]]; then
+		echo '*** START setting variables ***'
+		while read a b ; do
+			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
+			if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; echo UserAgent = $UserAgent;  fi
+			if [[ "$a" == "NotStartedDir" ]]; then NotStartedDir="$b"; echo NotStartedDir = $NotStartedDir;  fi
+			if [[ "$a" == "InProgressDir" ]]; then
+				InProgressDir="$b"
+				FileInProgress="${b}/${domain}.txt"
+				echo InProgressDir = $InProgressDir
+				echo FileInProgress = $FileInProgress
+			fi
+			if [[ "$a" == "DoneDir" ]]; then DoneDir="$b"; echo DoneDir = $DoneDir; fi
+			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo MyProcess = $MyProcess;  fi
+			if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; echo RunScriptDir = $RunScriptDir;  fi
+			if [[ "$a" == "ExportDir" ]]; then
+				ExportDir="$b"
+				dt=$(date +"%Y-%m-%d")
+				OutputDir="${b}/${domain}_${domainid}/${dt}"
+				echo OutputDir = $OutputDir
+			fi
+			if [[ "$a" == "LogDir" ]]; then
+				LogFile="${b}/$domain.log"
+				LogErrorFile="${b}/${domain}_errors.log"
+				echo LogFile = $LogFile
+				echo LogErrorFile = $LogErrorFile
+			fi
+			if [[ "$a" == "TempDir" ]]; then
+				TempDir="${b}/${domain}"
+				echo TempDir = $TempDir
+			fi
+		done < loader.ini
+		echo '*** END setting variables***'
+	fi
+}
+# Functions end
+
+LoadSettings
+
+sleep 5
+
+# Creating Dirs
 echo Checking output directories...
-if [ -d "$dir/" ]; then rm -R "$dir/" ; fi
-if ! [ -d "$exportdir/" ]; then echo ... Creating ExportDir: $exportdir; mkdir "$exportdir/" ; fi
-if ! [ -d "$outputdir/" ]; then echo ... Creating OutputDir: $outputdir; mkdir "$outputdir/" ; fi
+if [ -d "$TempDir" ]; then rm -R $TempDir ; fi
+if ! [ -d "$ExportDir" ]; then echo ... Creating ExportDir: $exportdir; mkdir $ExportDir ; fi
+if ! [ -d "$ExportDir/${domain}_${domainid}" ]; then mkdir "$ExportDir/${domain}_${domainid}" ; fi
+if ! [ -d "$OutputDir" ]; then echo ... Creating OutputDir: $OutputDir; mkdir $OutputDir ; fi
 echo ... done!
 echo
 
 echo Logging settings ...
-echo Date: $dt >> $LogFile
-echo Domain: $domain >> $LogFile
-echo DomainID: $domainid >> $LogFile
-echo TempDir: $dir >> $LogFile
-echo ExportDir: $exportdir >> $LogFile
-echo OutputDir: $outputdir >> $LogFile
-echo FileToMove: $FileInProgress >> $LogFile
-echo DestinationFile: $FileDone >> $LogFile
-echo  >> $LogFile
+echo "Date: $dt" >> $LogFile && echo "Domain: $domain" >> $LogFile && echo "DomainID: $domainid" >> $LogFile
+echo "TempDir: $TempDir" >> $LogFile && echo "ExportDir: $exportdir" >> $LogFile&& echo "OutputDir: $outputdir" >> $LogFile
+echo "FileToMove: $FileInProgress" >> $LogFile && echo "UserAgent: $UserAgent" >> $LogFile
 echo ... done!
-echo
 
 echo
 echo Staring grabbing $domain ...
@@ -56,10 +80,10 @@ mv $FileNotStarted $FileInProgress
 grab-site --level=3 \
 	--concurrency=3 \
 	--delay 1 \
-	--ua="$useragent" \
+	--ua="$UserAgent" \
 	--id=$id \
-	--dir=$dir \
-	--finished-warc-dir=$outputdir \
+	--dir=$TempDir \
+	--finished-warc-dir=$OutputDir \
 	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \
 	http://$domain  2> $LogErrorFile >> $LogFile
 
@@ -76,11 +100,18 @@ while [[ $COUNTER -lt  "60" ]]; do
 	sleep 1m
 done
 
-echo ... папка "$dir" не содержит war.gz, удаляем ...
-rm -R $dir
+echo ... TempDir "$dir" does not contains war.gz, deleting ...
+rm -R $TempDir
+
+if ! [[ -z "$(cat $LogErrorFile | grep RuntimeError)" ]]; then
+	echo && echo Domain $domain finished with errors:
+	cat $LogErrorFile | grep RuntimeError
+	echo
+	sleep 30
+fi
 
 
-# exec 1>&6 6>&- # Восстановить stdout и закрыть дескр. #6.
+# exec 1>&6 6>&- # Reset stdout and vlose description #6.
 
 
 # ***

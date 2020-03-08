@@ -5,7 +5,7 @@
 
 # Default: 80GB
 LOW_DISK_KB=$((15 * 1024 * 1024))
-PARTITION=/home/viking01/data
+PARTITION=/mnt/vdrive/
 CHECK_INTERVAL_SEC=60
 
 # Track whether *we* paused the grab-sites to avoid (typically) resuming

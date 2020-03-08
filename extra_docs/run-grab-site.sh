@@ -1,5 +1,6 @@
 #!/bin/bash
-#
+# Run Crawler
+# v 1.0.3
 # Grab-site Options
 # source: https://github.com/ArchiveTeam/grab-site
 #
@@ -19,33 +20,69 @@ function LoadSettings {
 		echo '*** START setting variables ***'
 		while read a b ; do
 			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
-			if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; echo UserAgent = $UserAgent;  fi
-			if [[ "$a" == "NotStartedDir" ]]; then NotStartedDir="$b"; echo NotStartedDir = $NotStartedDir;  fi
-			if [[ "$a" == "InProgressDir" ]]; then
-				InProgressDir="$b"
-				FileInProgress="${b}/${domain}.txt"
-				echo InProgressDir = $InProgressDir
+			if [[ "$a" == "BaseDir" ]]; then
+				BaseDir="$b"
+				NotStartedDir="${BaseDir}/NotStarted"
+				InProgressDir="${BaseDir}/InProgress"
+				DoneDir="${BaseDir}/Done"
+				LocalRepoDir="${BaseDir}/LocalRepo"
+				echo "BaseDir = $BaseDir"
+				echo "NotStartedDir = $NotStartedDir"
+				echo "InProgressDir = $InProgressDir"
+				echo "DoneDir = $DoneDir"
+				echo "LocalRepoDir = $LocalRepoDir"
+
+				FileInProgress="${BaseDir}/InProgress/${domain}.txt"
 				echo FileInProgress = $FileInProgress
-			fi
-			if [[ "$a" == "DoneDir" ]]; then DoneDir="$b"; echo DoneDir = $DoneDir; fi
-			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo MyProcess = $MyProcess;  fi
-			if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; echo RunScriptDir = $RunScriptDir;  fi
-			if [[ "$a" == "ExportDir" ]]; then
-				ExportDir="$b"
+
+				ExportDir="${BaseDir}/export_grab-site"
 				dt=$(date +"%Y-%m-%d")
-				OutputDir="${b}/${domain}_${domainid}/${dt}"
-				echo OutputDir = $OutputDir
+				OutputDir="${ExportDir}/${domain}_${domainid}/${dt}"
+				echo "OutputDir = $OutputDir"
+
+				LogDir="${BaseDir}/logs"
+				LogFile="${LogDir}/$domain.log"
+				LogErrorFile="${LogDir}/${domain}_errors.log"
+				echo "LogDir = $LogDir"
+				echo "LogFile = $LogFile"
+				echo "LogErrorFile = $LogErrorFile"
 			fi
-			if [[ "$a" == "LogDir" ]]; then
-				LogFile="${b}/$domain.log"
-				LogErrorFile="${b}/${domain}_errors.log"
-				echo LogFile = $LogFile
-				echo LogErrorFile = $LogErrorFile
-			fi
+
 			if [[ "$a" == "TempDir" ]]; then
 				TempDir="${b}/${domain}"
 				echo TempDir = $TempDir
 			fi
+
+			if [[ "$a" == "CloudRepo" ]]; then CloudRepo="$b"; echo "CloudRepo = $CloudRepo";  fi
+			if [[ "$a" == "CloudBaseDir" ]]; then CloudBaseDir="$b"; echo "CloudBaseDir = $CloudBaseDir";  fi
+
+			if [[ "$a" == "IfMoveToCloud" ]]; then IfMoveToCloud="$b"; echo "IfMoveToCloud = $IfMoveToCloud";  fi
+			if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; echo "UserAgent = $UserAgent";  fi
+			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo "MyProcess = $MyProcess";  fi
+
+			#if [[ "$a" == "NotStartedDir" ]]; then NotStartedDir="$b"; echo NotStartedDir = $NotStartedDir;  fi
+			#if [[ "$a" == "InProgressDir" ]]; then
+			#	InProgressDir="$b"
+			#	FileInProgress="${b}/${domain}.txt"
+			#	echo InProgressDir = $InProgressDir
+			#	echo FileInProgress = $FileInProgress
+			#fi
+			#if [[ "$a" == "DoneDir" ]]; then DoneDir="$b"; echo DoneDir = $DoneDir; fi
+			#if [[ "$a" == "LocalRepoDir" ]]; then LocalRepoDir="$b"; echo LocalRepoDir = $LocalRepoDir; fi
+
+			#if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; echo RunScriptDir = $RunScriptDir;  fi
+			#if [[ "$a" == "ExportDir" ]]; then
+			#	ExportDir="$b"
+			#	dt=$(date +"%Y-%m-%d")
+			#	OutputDir="${b}/${domain}_${domainid}/${dt}"
+			#	echo OutputDir = $OutputDir
+			#fi
+			#if [[ "$a" == "LogDir" ]]; then
+			#	LogFile="${b}/$domain.log"
+			#	LogErrorFile="${b}/${domain}_errors.log"
+			#	echo LogFile = $LogFile
+			#	echo LogErrorFile = $LogErrorFile
+			#fi
 		done < loader.ini
 		echo '*** END setting variables***'
 	fi
@@ -61,8 +98,10 @@ echo Checking output directories...
 if [ -d "$TempDir" ]; then rm -R $TempDir ; fi
 if ! [ -d "$ExportDir" ]; then echo ... Creating ExportDir: $exportdir; mkdir $ExportDir ; fi
 if ! [ -d "$ExportDir/${domain}_${domainid}" ]; then mkdir "$ExportDir/${domain}_${domainid}" ; fi
+if ! [ -d "$ExportDir/${domain}_${domainid}/homepage" ]; then mkdir "$ExportDir/${domain}_${domainid}/homepage" ; fi
 if ! [ -d "$OutputDir" ]; then echo ... Creating OutputDir: $OutputDir; mkdir $OutputDir ; fi
-echo ... done!
+if ! [ -d "$LocalRepoDir" ]; then echo ... Creating LocalRepoDir: $LocalRepoDir; mkdir $LocalRepoDir ; fi
+echo ...  done!
 echo
 
 echo Logging settings ...
@@ -70,48 +109,144 @@ echo "Date: $dt" >> $LogFile && echo "Domain: $domain" >> $LogFile && echo "Doma
 echo "TempDir: $TempDir" >> $LogFile && echo "ExportDir: $exportdir" >> $LogFile&& echo "OutputDir: $outputdir" >> $LogFile
 echo "FileToMove: $FileInProgress" >> $LogFile && echo "UserAgent: $UserAgent" >> $LogFile
 echo ... done!
-
-echo
-echo Staring grabbing $domain ...
 echo
 
+# Move NotStarted task to InProgress task
+echo "Moving $FileNotStarted to $FileInProgress ..."
 mv $FileNotStarted $FileInProgress
+cp $FileInProgress ${CloudBaseDir}/InProgress/
 
+# Run full site crawler
+echo "Staring grabbing $domain ..."
 grab-site --level=3 \
 	--concurrency=3 \
 	--delay 1 \
 	--ua="$UserAgent" \
-	--id=$id \
+	--id=$domainid \
 	--dir=$TempDir \
 	--finished-warc-dir=$OutputDir \
 	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \
-	http://$domain  2> $LogErrorFile >> $LogFile
+	http://$domain  2>> $LogErrorFile >> $LogFile
+
+echo "Finishing grabbing $domain ..."
+sleep 5
+
+# Run home page crawler
+echo "Staring grabbing $domain homepage..."
+grab-site --1 \
+	--concurrency=3 \
+	--delay 1 \
+	--ua="$UserAgent" \
+	--id=${id}1 \
+	--dir=${TempDir}/homepage \
+	--finished-warc-dir=$ExportDir/${domain}_${domainid}/homepage \
+	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \
+	http://$domain  2>> $LogErrorFile >> $LogFile
+
+echo "Finishing grabbing $domain homepage..."
+sleep 5
+
+# Check if there were errors during crawling
+if ! [[ -z "$(cat $LogErrorFile | grep RuntimeError )" ]]; then
+        echo && echo "Domain $domain finished with errors:"
+        cat $LogErrorFile | grep "RuntimeError:"
+        echo
+        sleep 30
+fi
 
 
-# проверяем, что во временной директории нет warc файлов
+
+
+
+
+
+# Move InProgress task to Done task
+echo "Moving $FileInProgress to DoneDir ..."
+mv  $FileInProgress ${DoneDir}/
+
+# Move finished-warc-dir=$OutputDir to local repo
+echo "Moving $domain to LocalRepoDir ..."
+mv $ExportDir/${domain}_${domainid}/ ${LocalRepoDir}/
+echo "... done"
+sleep 3
+
+# Move logs files to local repo $LogErrorFile $LogFile
+if ! [ -d "${LocalRepoDir}/logs" ]; then echo "... Creating LocalRepoLogs dir: ${LocalRepoDir}/logs"; mkdir ${LocalRepoDir}/logs ; fi
+echo "Moving $LogFile to LocalRepoDir ..."
+mv $LogFile ${LocalRepoDir}/logs/
+echo "... done"
+echo "Moving $LogErrorFile to LocalRepoDir ..."
+mv $LogErrorFile ${LocalRepoDir}/logs/
+echo "... done"
+
+# Move from LocalRepo to Seafile
+if [[ "${IfMoveToCloud}" == "true"  ]]; then
+
+	echo "Moving to CloudRepo ..."
+	if  [[ -d "$CloudRepo" ]]; then
+		# if cloud mounted
+		echo "Cloud is mounted, continue ..."
+		mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/
+
+	else
+		# if cloud unmounted, save job to file
+		echo "CloudRepo is unmounted, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
+
+		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
+		echo 'while [[ -z "$(ls '$CloudRepo' )" ]]; do sleep 30; done' >> ${LocalRepoDir}/job_${domain}.sh
+		echo "mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/" >> ${LocalRepoDir}/job_${domain}.sh
+		echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
+
+		chmod +x ${LocalRepoDir}/job_${domain}.sh
+		${LocalRepoDir}/job_${domain}.sh &
+	fi
+
+	echo "... done!"
+else
+	# if cloud unmounted, save job to file
+	echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
+
+	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
+	echo 'while [[ -z "$(ls '$CloudRepo' )" ]]; do sleep 30; done' >> ${LocalRepoDir}/job_${domain}.sh
+	echo "mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/" >> ${LocalRepoDir}/job_${domain}.sh
+	echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
+
+	chmod +x ${LocalRepoDir}/job_${domain}.sh
+fi
+
+# Check if TempDir contains no warc files
+# and delete TempDir
 COUNTER=0
 while [[ $COUNTER -lt  "60" ]]; do
-	if [[ "0" -eq "$(find $dir -type f | grep warc.gz | wc -l)" ]]; then
+	if [[ "0" -eq "$(find $TempDir -type f | grep warc.gz | wc -l)" ]]; then
 		echo
 		let "COUNTER += 60"
-		sleep 1m # пауза 1 минута
+		sleep 1m # pause 1 minute
 	fi
 	let "COUNTER += 1"
 	sleep 1m
 done
 
-echo ... TempDir "$dir" does not contains war.gz, deleting ...
+echo ... TempDir "$TempDir" does not contains war.gz, deleting ...
 rm -R $TempDir
-
-if ! [[ -z "$(cat $LogErrorFile | grep RuntimeError)" ]]; then
-	echo && echo Domain $domain finished with errors:
-	cat $LogErrorFile | grep RuntimeError
-	echo
-	sleep 30
-fi
+echo "... done!"
 
 
-# exec 1>&6 6>&- # Reset stdout and vlose description #6.
+
+
+
+# Finish
+echo "[RUNNER] The task $domain is done!"
+echo
+
+
+
+# exec 1>&6 6>&- # Reset stdout and close description #6.
+
+
+
+
+
 
 
 # ***

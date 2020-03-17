@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo apt-get update
+sudo apt-get update && sudo apt-get upgrade
 sudo apt-get install --no-install-recommends \
     git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev \
     libsqlite3-dev libffi-dev libxml2-dev libxslt1-dev libre2-dev pkg-config
@@ -24,3 +24,8 @@ sleep 10
 # add global stop list
 # global2
 # add symlink to grab-site settings dir
+
+sudo ln -s /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite /home/viking01/grab-site-options
+
+# rm /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite/ignore_sets/global
+# cp global2 /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite/ignore_sets/global

@@ -20,3 +20,7 @@ sleep 10
 ~/.pyenv/versions/3.7.5/bin/python -m venv ~/gs-venv
 ~/gs-venv/bin/pip install --no-binary lxml --upgrade git+https://github.com/ArchiveTeam/grab-site
 ~/gs-venv/bin/pip install html5lib psutil
+
+# add global stop list
+# global2
+# add symlink to grab-site settings dir

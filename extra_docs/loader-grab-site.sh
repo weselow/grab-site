@@ -1,9 +1,9 @@
 #!/bin/bash
 # Task Runner
-# v.1.0.3
+# v.1.0.4
 
 JobsCounter=0
-MY_PID=$$
+# MY_PID=$$
 
 # Functions start
 function LoadSettings {
@@ -11,12 +11,14 @@ function LoadSettings {
 		echo '*** START setting variables ***'
 		while read a b ; do
 			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
+			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; echo Hostname = $Hostname;  fi
 			if [[ "$a" == "BaseDir" ]]; then
 				BaseDir="$b"
-				NotStartedDir="${BaseDir}/NotStarted"
-				InProgressDir="${BaseDir}/InProgress"
-				DoneDir="${BaseDir}/Done"
+				NotStartedDir="${BaseDir}/${Hostname}/NotStarted"
+				InProgressDir="${BaseDir}/${Hostname}/InProgress"
+				DoneDir="${BaseDir}/${Hostname}/Done"
 				LogDir="${BaseDir}/logs"
+				
 				echo "BaseDir = $BaseDir"
 				echo "NotStartedDir = $NotStartedDir"
 				echo "InProgressDir = $InProgressDir"
@@ -24,12 +26,6 @@ function LoadSettings {
 				echo "LogDir = $LogDir"
 			fi
 
-			if [[ "$a" == "CloudBaseDir" ]]; then CloudBaseDir="$b"; echo "CloudBaseDir = $CloudBaseDir";  fi
-
-			#if [[ "$a" == "NotStartedDir" ]]; then NotStartedDir="$b"; echo NotStartedDir = $NotStartedDir;  fi
-			#if [[ "$a" == "InProgressDir" ]]; then InProgressDir="$b"; echo InProgressDir = $InProgressDir;  fi
-			#if [[ "$a" == "DoneDir" ]]; then DoneDir="$b"; echo DoneDir = $DoneDir; fi
-			#if [[ "$a" == "LogDir" ]]; then LogDir="$b"; echo LogDir = $LogDir; fi
 			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo "MyProcess = $MyProcess";  fi
 			if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; echo "RunScriptDir = $RunScriptDir";  fi
 		done < loader.ini
@@ -93,15 +89,6 @@ sleep 3
 
 # Run NotStarted tasks
 while [[ true ]]; do
-
-	# if not enough tasks in NotStartedDir
-	if [[ "$(find $NotStartedDir -name '*.txt' | wc -l)" -lt "$MaxTasks" ]]; then
-		#statements
-		echo "[LOADER] Checking if there are new tasks in CloudDir ... "
-		echo "... copying $(ls ${CloudBaseDir}/NotStarted/*.txt) files ..."
-		mv ${CloudBaseDir}/NotStarted/*.txt $NotStartedDir
-		echo "... done!"
-	fi
 
 	for i in $(find $NotStartedDir -name '*.txt')
 		do

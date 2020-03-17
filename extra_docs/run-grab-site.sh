@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run Crawler
-# v 1.0.3
+# v 1.0.4
 # Grab-site Options
 # source: https://github.com/ArchiveTeam/grab-site
 #
@@ -20,20 +20,24 @@ function LoadSettings {
 		echo '*** START setting variables ***'
 		while read a b ; do
 			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
+			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; echo Hostname = $Hostname;  fi
 			if [[ "$a" == "BaseDir" ]]; then
 				BaseDir="$b"
-				NotStartedDir="${BaseDir}/NotStarted"
-				InProgressDir="${BaseDir}/InProgress"
-				DoneDir="${BaseDir}/Done"
+				NotStartedDir="${BaseDir}/${Hostname}/NotStarted"
+				InProgressDir="${BaseDir}/${Hostname}/InProgress"
+				DoneDir="${BaseDir}/${Hostname}/Done"
 				LocalRepoDir="${BaseDir}/LocalRepo"
+				TempDir="${BaseDir}/tmp/${domain}"
+				
 				echo "BaseDir = $BaseDir"
 				echo "NotStartedDir = $NotStartedDir"
 				echo "InProgressDir = $InProgressDir"
 				echo "DoneDir = $DoneDir"
 				echo "LocalRepoDir = $LocalRepoDir"
+				echo "TempDir = $TempDir"
 
-				FileInProgress="${BaseDir}/InProgress/${domain}.txt"
-				echo FileInProgress = $FileInProgress
+				FileInProgress="${InProgressDir}/${domain}.txt"
+				echo "FileInProgress = $FileInProgress"
 
 				ExportDir="${BaseDir}/export_grab-site"
 				dt=$(date +"%Y-%m-%d")
@@ -48,41 +52,11 @@ function LoadSettings {
 				echo "LogErrorFile = $LogErrorFile"
 			fi
 
-			if [[ "$a" == "TempDir" ]]; then
-				TempDir="${b}/${domain}"
-				echo TempDir = $TempDir
-			fi
-
 			if [[ "$a" == "CloudRepo" ]]; then CloudRepo="$b"; echo "CloudRepo = $CloudRepo";  fi
-			if [[ "$a" == "CloudBaseDir" ]]; then CloudBaseDir="$b"; echo "CloudBaseDir = $CloudBaseDir";  fi
-
 			if [[ "$a" == "IfMoveToCloud" ]]; then IfMoveToCloud="$b"; echo "IfMoveToCloud = $IfMoveToCloud";  fi
 			if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; echo "UserAgent = $UserAgent";  fi
 			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo "MyProcess = $MyProcess";  fi
 
-			#if [[ "$a" == "NotStartedDir" ]]; then NotStartedDir="$b"; echo NotStartedDir = $NotStartedDir;  fi
-			#if [[ "$a" == "InProgressDir" ]]; then
-			#	InProgressDir="$b"
-			#	FileInProgress="${b}/${domain}.txt"
-			#	echo InProgressDir = $InProgressDir
-			#	echo FileInProgress = $FileInProgress
-			#fi
-			#if [[ "$a" == "DoneDir" ]]; then DoneDir="$b"; echo DoneDir = $DoneDir; fi
-			#if [[ "$a" == "LocalRepoDir" ]]; then LocalRepoDir="$b"; echo LocalRepoDir = $LocalRepoDir; fi
-
-			#if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; echo RunScriptDir = $RunScriptDir;  fi
-			#if [[ "$a" == "ExportDir" ]]; then
-			#	ExportDir="$b"
-			#	dt=$(date +"%Y-%m-%d")
-			#	OutputDir="${b}/${domain}_${domainid}/${dt}"
-			#	echo OutputDir = $OutputDir
-			#fi
-			#if [[ "$a" == "LogDir" ]]; then
-			#	LogFile="${b}/$domain.log"
-			#	LogErrorFile="${b}/${domain}_errors.log"
-			#	echo LogFile = $LogFile
-			#	echo LogErrorFile = $LogErrorFile
-			#fi
 		done < loader.ini
 		echo '*** END setting variables***'
 	fi
@@ -114,7 +88,6 @@ echo
 # Move NotStarted task to InProgress task
 echo "Moving $FileNotStarted to $FileInProgress ..."
 mv $FileNotStarted $FileInProgress
-cp $FileInProgress ${CloudBaseDir}/InProgress/
 
 # Run full site crawler
 echo "Staring grabbing $domain ..."
@@ -183,20 +156,20 @@ echo "... done"
 if [[ "${IfMoveToCloud}" == "true"  ]]; then
 
 	echo "Moving to CloudRepo ..."
-	if  [[ -d "$CloudRepo" ]]; then
+#	if  [[ -d "$CloudRepo" ]]; then
+	if  [[ "true" == "true" ]]; then
 		# if cloud mounted
 		echo "Cloud is mounted, continue ..."
-		mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/
+		# mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/
+		/usr/bin/rclone move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}
 
 	else
 		# if cloud unmounted, save job to file
 		echo "CloudRepo is unmounted, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 
-		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
-		echo 'while [[ -z "$(ls '$CloudRepo' )" ]]; do sleep 30; done' >> ${LocalRepoDir}/job_${domain}.sh
-		echo "mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/" >> ${LocalRepoDir}/job_${domain}.sh
+		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
+		echo "/usr/bin/rclone move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}" >> ${LocalRepoDir}/job_${domain}.sh
 		echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
-
 		chmod +x ${LocalRepoDir}/job_${domain}.sh
 		${LocalRepoDir}/job_${domain}.sh &
 	fi
@@ -206,11 +179,9 @@ else
 	# if cloud unmounted, save job to file
 	echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 
-	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
-	echo 'while [[ -z "$(ls '$CloudRepo' )" ]]; do sleep 30; done' >> ${LocalRepoDir}/job_${domain}.sh
-	echo "mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/" >> ${LocalRepoDir}/job_${domain}.sh
+	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
+	echo "/usr/bin/rclone move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}" >> ${LocalRepoDir}/job_${domain}.sh
 	echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
-
 	chmod +x ${LocalRepoDir}/job_${domain}.sh
 fi
 

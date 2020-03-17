@@ -1,0 +1,351 @@
+# URLs that are very likely to be endless loops
+%25252525
+/App_Themes/.+/App_Themes/
+/bxSlider/.+/bxSlider/
+/bxSlider/bxSlider/
+/slides/slides/.+/slides/
+/slides/.+/slides/slides/
+/slides/slides/slides/
+/js/js/.+/js/
+/js/.+/js/js/
+/js/js/js/
+/css/css/.+/css/
+/css/.+/css/css/
+/css/css/css/
+/styles/styles/.+/styles/
+/styles/.+/styles/styles/
+/styles/styles/styles/
+/scripts/scripts/.+/scripts/
+/scripts/.+/scripts/scripts/
+/scripts/scripts/scripts/
+/images/images/.+/images/
+/images/.+/images/images/
+/images/images/images/
+/img/img/.+/img/
+/img/.+/img/img/
+/img/img/img/
+/clientscript/clientscript/.+/clientscript/
+/clientscript/.+/clientscript/clientscript/
+/clientscript/clientscript/clientscript/
+/lib/exe/.*lib[-_]exe[-_]lib[-_]exe[-_]
+^https?://{any_start_netloc}/.*&amp;amp;amp;
+^https?://{any_start_netloc}/.*amp%3Bamp%3Bamp%3B
+^https?://{any_start_netloc}/.+/plugins/ultimate-social-media-plus/.+/like/like/
+
+# URLs that are very likely incorrectly extracted by wpull
+/(%5C)+(%22|%27)
+/%5C/%5C/
+/%27\+[^/]+\+%27
+/%22\+[^/]+\+%22
+/%27%20\+[^/]+\+%20%27
+/%22%20\+[^/]+\+%20%22
+/\\+(%22|%27)
+/\\+["']
+/\\/\\/
+/'\+[^/]+\+'
+^https?://{any_start_netloc}/.+/%3Ca%20href=
+^https?://www\.youtube\.com/.*\[\[.+\]\]
+^https?://www\.youtube\.com/.*\{\{.+\}\}
+
+^https?://www\.google\.com/recaptcha/(api|mailhide/d\?)
+^https?://www\.google\.com/accounts/AccountChooser
+^https?://accounts\.google\.com/(SignUp|ServiceLogin|AccountChooser|a/UniversalLogin)
+
+# CAPTCHAs on ASP.NET sites
+^https?://[^/]+/.+/CaptchaImage\.axd
+
+# We don't want to change language
+^https?://www\.flickr\.com/change_language\.gne
+
+# Links to Wikipedia are very common, and the thumbnails are almost always
+# already archived at archive.org.
+^https?://upload\.wikimedia\.org/wikipedia/[^/]+/thumb/
+
+# Tracking scripts, tracking pixels, analytics
+^https?://geo\.yahoo\.com/b\?
+^https?://b\.scorecardresearch\.com/
+^https?://pixel\.blog\.hu/
+^https?://pixel\.redditmedia\.com/pixel/
+^https?://alb\.reddit\.com/
+^https?://pixel\.(quantserve|wp)\.com/
+^https?://(www|ssl)\.google-analytics\.com/(r/)?(__utm\.gif|collect\?)
+^https?://p\.opt\.fimserve\.com/
+^https?://.+/js-agent\.newrelic\.com/nr-\d{3}(\.min)?\.js$
+^https?://.+/stats\.g\.doubleclick\.net/dc\.js$
+^https?://.+/js/chartbeat\.js$
+^https?://[^/]+\.xiti\.com/hit\.xiti\?
+^https?://[^/]+\.services\.livejournal\.com/ljcounter
+^https?://beacon\.wikia-services\.com/
+^https?://s\d+\.sitemeter\.com/(js/counter\.js|meter\.asp)
+^https?://www\.amazon\.com/.+/logging/log-action\.html
+
+# The tracking on warnerbros.com inexplicably links to bogus warnerbros.com/\d+ pages
+^https?://www\.warnerbros\.com/\d+$
+
+# Inaccessible and dead sites that are frequently-linked
+^https?://i\.dev\.cdn\.turner\.com/
+^https?://[^/]+\.corp\.ne1\.yahoo\.com/
+^https?://prod-preview\.wired\.com/
+^https?://(www\.)?(megaupload|filesonic|wupload)\.com/
+
+# Links to TED and TED embeds are common enough that we need to ignore their
+# videos to prevent WARC bloat
+^https?://video-subtitle\.tedcdn\.com/
+^https?://download\.ted\.com/
+
+# Avoid bloating WARCs with TMZ videos
+^https?://tmz\.vo\.llnwd\.net/
+
+# Avoid hitting radio and TV streams, which can hang crawls for a long time.
+# Note that we also detect and abort Icecast/SHOUTcast responses in
+# wpull_hooks.py, so some of these ignores are no longer necessary.
+^https?://([^\./]+\.)?stream\.publicradio\.org/
+^https?://av\.rasset\.ie/av/live/
+^https?://gcnplayer\.gcnlive\.com/.+
+^https?://mp3\.ffh\.de/
+^https?://(audio\d?|nfw)\.video\.ria\.ru/
+^https?://[^\./]+\.radioscoop\.(com|net):\d+/
+^https?://[^\./]+\.streamchan\.org:\d+/
+^https?://[^/]*musicproxy\.s12\.de/
+^https?://relay\.broadcastify\.com/
+^https?://audio\d?\.radioreference\.com/
+^https?://[^/]+\.akadostream\.ru(:\d+)?/
+^https?://play(\d+)?\.radio13\.ru:8000/
+^https?://stream(\d+)?\.media\.rambler\.ru/
+^https?://pub(\d+)?\.di\.fm/
+^https?://[^/]+\.streamtheworld\.com/
+^https?://[^/]+\.gaduradio\.pl/
+^https?://r-a-d\.io/.+\.mp3$
+^https?://mp3tslg\.tdf-cdn\.com/
+^https?://[^/]+/anony/mjpg\.cgi$
+^https?://[^/]+/mjpg/video\.mjpg
+^https?://air\.radiorecord\.ru(:\d+)?/
+^https?://[^/]+\.rastream\.com(:\d+)?/
+^https?://audiots\.scdn\.arkena\.com/
+^https?://[a-z0-9]+\.cdn\.dvmr\.fr(:\d+)?/.+\.mp3
+
+# Avoid following any kind of 'share' or 'bookmark' link
+^https?://(www|draft)\.blogger\.com/(navbar\.g|post-edit\.g|delete-comment\.g|comment-iframe\.g|share-post\.g|email-post\.g|blog-this\.g|delete-backlink\.g|rearrange|blog_this\.pyra)\?
+^https?://(www|px\.srvcs)\.tumblr\.com/(impixu\?|share(/link/?)?\?|reblog/)
+^https?://plus\.google\.com/share\?
+^https?://(apis|plusone)\.google\.com/_/\+1/
+^https?://(ssl\.|www\.)?reddit\.com/(login\?dest=|submit\?|static/button/button)
+^https?://(www\.)?digg\.com/submit\?
+^https?://(www\.)?facebook\.com/(plugins/(share_button|like(box)?)\.php|sharer/sharer\.php|sharer?\.php|dialog/(feed|share))\?
+^https?://(www\.)?facebook\.com/v[\d\.]+/plugins/like\.php
+^https?://social-plugins\.line\.me/lineit/share
+^https?://(www\.)?twitter\.com/(share\?|intent/((re)?tweet|favorite)|home/?\?status=|\?status=)
+^https?://platform\d?\.twitter\.com/widgets/tweet_button.html\?
+^https?://www\.newsvine\.com/_wine/save\?
+^https?://www\.netvibes\.com/subscribe\.php\?
+^https?://add\.my\.yahoo\.com/(rss|content)\?
+^https?://www\.addtoany\.com/(add_to/|share_save\?)
+^https?://www\.addthis\.com/bookmark\.php\?
+^https?://([^\.]+\.)?pinterest\.com/pin/create/
+^https?://www\.linkedin\.com/(cws/share|shareArticle)\?
+^https?://(www\.)?stumbleupon\.com/(submit\?|badge/embed/)
+^https?://csp\.cyworld\.com/bi/bi_recommend_pop\.php\?
+^https?://share\.flipboard\.com/bookmarklet/popout\?
+^https?://flattr.com/submit/auto\?
+^https?://(www\.)?myspace\.com/Modules/PostTo/
+^https?://www\.google\.com/bookmarks/mark\?
+^https?://myweb2\.search\.yahoo\.com/myresults/bookmarklet\?
+^https?://vuible\.com/pins-settings/
+^https?://news\.ycombinator\.com/submitlink\?
+^https?://reporter\.es\.msn\.com/\?fn=contribute
+^https?://www\.blinklist\.com/index\.php\?Action=Blink/addblink\.php
+^https?://sphinn\.com/index\.php\?c=post&m=submit&
+^https?://posterous\.com/share\?
+^https?://del\.icio\.us/post\?
+^https?://delicious\.com/(save|post)\?
+^https?://(www\.)?friendfeed\.com/share\?
+^https?://(www\.)?xing\.com/(app/user\?op=share|social_plugins/share\?)
+^https?://iwiw\.hu/pages/share/share\.jsp\?
+^https?://memori(\.qip)?\.ru/link/\?
+^https?://wow\.ya\.ru/posts_(add|share)_link\.xml\?
+^https?://connect\.mail\.ru/share\?
+^https?://zakladki\.yandex\.ru/newlink\.xml\?
+^https?://vkontakte\.ru/share\.php\?
+^https?://www\.odnoklassniki\.ru/dk\?st\.cmd=addShare
+^https?://www\.google\.com/(reader/link\?|buzz/post\?)
+^https?://service\.weibo\.com/share/share\.php\?
+^https?://(www\.)?technorati\.com/faves/?\?add=
+^https?://bufferapp\.com/add\?
+^https?://b\.hatena\.ne\.jp/add\?
+^https?://api\.addthis\.com/
+^https?://bookmark\.naver\.com/post\?
+^https?://(www\.)?instapaper\.com/hello2\?
+^https?://getpocket\.com/(save|edit)/?\?
+^https?://medium\.com/_/(vote|bookmark|subscribe)/
+^https?://telegram\.me/share/url\?
+
+# mail.google.com requires login but shows up on the web surprisingly often
+^https?://mail\.google\.com/mail/
+
+# This is the default gravatar that you don't want a million copies of
+^https?://(\d|www|secure)\.gravatar\.com/avatar/ad516503a11cd5ca435acc9bb6523536
+
+# imageshack's 404 page that you would be hitting quite often otherwise
+^https?://imageshack\.com/lost$
+
+# A loop on khaleejtimes.com
+^https?://www\.khaleejtimes\.com/.+/kt_.+/kt_
+^https?://www\.khaleejtimes\.com/.+/images/.+/images/
+^https?://www\.khaleejtimes\.com/.+/imgactv/.+/imgactv/
+
+# More loops
+^https?://photobucket\.com/.+/albums/.+/albums/
+^https?://([^/]+\.)?gdcvault\.com(/.*/|/)(fonts(/.*/|/)fonts/|css(/.*/|/)css/|img(/.*/|/)img/)
+^https?://static\.licdn\.com/sc/p/com\.linkedin\.nux(:|%3A)nux-static-content(\+|%2B)[\d\.]+/f/
+^https?://static\.licdn\.com/sc/p/.+/f//
+^https?://tm\.uol\.com\.br/h/.+/h/
+^https?://((s-)?static\.ak\.fbcdn\.net|(connect\.|www\.)?facebook\.com)/connect\.php/js/.*rsrc\.php
+^https?://web\.archive\.org/web/[^/]+/https?\:/[^/]+\.addthis\.com/.+/static/.+/static/
+^https?://[^/]+\.libsyn\.com/.+/%2[02]https?:/
+^https?://www\.infomous\.com/cloud_widget/lib/lib/
+
+# This specifically catches only *invalid* flickr.com links extracted by wpull
+^https?://www\.flickr\.com/(explore/|photos/[^/]+/(sets/\d+/(page\d+/)?)?)\d+_[a-f0-9]+(_[a-z])?\.jpg$
+
+# Avoid grabbing thousands of these; they page-requisite each other
+^https?://media\.opb\.org/clips/embed/.+\.js$
+
+# Per-post and per-comment Atom feeds
+^https?://www\.blogger\.com/feeds/\d+/posts/default/\d+
+^https?://www\.blogger\.com/feeds/\d+/\d+/comments/default/\d+
+
+# Bogus /disqus.com path
+^https?://.+/.+/disqus\.com/forums/$
+
+# Bogus literal "/page/%d/" URLs (not filled with a number)
+^https?://{any_start_netloc}(/.*|/)page/%d/$
+
+# Bogus URLs on tumblr blogs
+^https?://{any_start_netloc}/.*(\?|%5Cx26)route=(/page/:page|/archive/:year/:month|/tagged/:tag|/post/:id|/image/:post_id)
+^https?://{any_start_netloc}/.*%5Cx26route=/archive
+
+# There are too many avatars on tumblr.com
+^https?://\d+\.media\.tumblr\.com/avatar_.+_16\.pn[gj]$
+
+^https?://www\.livejournal\.com/(tools/memadd|update|(identity/)?login)\.bml\?
+^https?://[^\.]+\.livejournal\.com/.+/\*sup_ru/ru/UTF-8/
+^https?://[^\.]+\.livejournal\.com/.+http://[^\.]+\.livejournal\.com/
+
+^https?://www\.dreamwidth\.org/tools/(memadd|tellafriend)\?
+
+^https?://r-login\.wordpress\.com/remote-login\.php
+^https?://{any_start_netloc}/(wp-admin/|wp-login\.php\?)
+^https?://[^/]+\.facebook\.com/login\.php
+
+# Ignore /search.*updated-(min|max)= blogspot pagination because all posts are
+# crawled anyway via the _archive.html pages.  Need to ignore on all domains
+# because blogspot also runs on non-blogspot.com domains.
+^https?://{any_start_netloc}/search(/label/[^\?]+|\?q=[^&]+|)[\?&]updated-(min|max)=\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d.*&max-results=\d+
+
+# Ignore bogus /CSI/ links on blogspot.com
+^https?://.+\.blogspot\.(com|in|com\.au|co\.uk|jp|co\.nz|ca|de|it|fr|se|sg|es|pt|com\.br|ar|mx|kr)/(\d{4}/\d{2}/|search/label/)(CSI/$|.*/CSI/CSI/CSI/)
+
+# Links to ?share=(twitter|facebook|reddit|email|google-plus-1) etc.
+# These typically redirect.
+^https?://{any_start_netloc}/.+[\?&]share=[a-z]{4,}
+
+# Per-comment links
+^https?://{any_start_netloc}/.+[\?&]mode=reply
+^https?://{any_start_netloc}/.+[\?&](replyto(com)?|like_comment)=\d+
+^https?://{any_start_netloc}/.+\?showComment(=|%5C)\d+
+^https?://{any_start_netloc}/.+/quote-comment-\d+/$
+^https?://{any_start_netloc}/.+/jetpack-comment/\?blogid=\d+&postid=\d+
+(?:displayimage|thumbnails)\.php[?&]album=(?:topn|toprated|lastcom|lastup|lastupby|random|lastcomby)
+ratepic\.php
+addfav\.php\?.*ref=displayimage\.php
+displayimage\.php\?.*slideshow=\d+
+^https?://error\.facebook\.com/common/scribe_endpoint\.php\?c=
+^https?://www\.facebook\.com/[^/]+/(posts/|app_)[^/]+\?(ref=page_internal&)?_fb_noscript=
+^https?://www\.facebook\.com/[^/]+/photos/(pb|a)\.[^/]+/[^/]+/.{4}/
+^https?://www\.facebook\.com/[^/]+/photos/(pb|a)\.[^/]+/[^/]+/\?type=
+/cron\.php\?
+/external\.php\?type=rss
+/login\.php\?
+/newreply\.php\?
+/private\.php\?
+/privmsg\.php\?
+/register\.php\?
+/sendmessage\.php\?
+/subscription\.php\?
+/posting\.php\?
+/viewtopic\.php\?.+&view=(next|previous)
+/viewtopic\.php\?.+&hilit=
+/feed\.php\?
+/index\.php\?option=com_mailto
+&view=login&return=
+&format=opensearch
+/misc\.php\?do=whoposted
+/newthread\.php\?
+/post_thanks\.php\?
+/blog_post\.php\?do=newblog
+/forumdisplay\.php.*[\?&]do=markread
+/userpoll/vote\.php\?
+/showthread\.php.*[\?&]goto=(next(old|new)est|newpost)
+/editpost\.php\?
+/\?view=getlastpost$
+/index\.php\?sharelink=
+/ucp\.php\?mode=delete_cookies
+^http://b\.scorecardresearch\.com/
+^http://ad\.doubleclick\.net/
+^http://www\.imdb\.com/rd/
+^http://www\.imdb\.com/.+\?ref_=
+^http://www\.imdb\.com/.+/board/flat/
+^http://www\.imdb\.com/.+/board/inline/
+^http://www\.imdb\.com/.+/board/thread/
+^http://www\.imdb\.com/help/boards_posting\.html
+^http://www\.imdb\.com/register/
+^http://www\.imdb\.com/.+/board/.+/\d+\?d=
+^http://www\.imdb\.com/.+/videogallery/.+/.+/
+^https?://{any_start_netloc}/.+[\?&]oldid=\d+
+^https?://{any_start_netloc}/.+[\?&]curid=\d+
+^https?://{any_start_netloc}/.+[\?&]limit=(20|100|250|500)
+^https?://{any_start_netloc}/.+[\?&]hide(minor|bots|anons|liu|myself|redirs|links|trans|patrolled)=
+^https?://{any_start_netloc}/.+([\?&]title=|/)Special:(UserLogin|UserLogout|Translate|MobileFeedback|MobileOptions|RecentChangesLinked|Diff|MobileDiff)
+^https?://{any_start_netloc}/.+([\?&]title=|/)Special:RecentChanges&from=\d+
+^https?://{any_start_netloc}/.+([\?&]title=|/)Special:ListFiles&dir=prev&offset=\d+
+^https?://{any_start_netloc}/.+([\?&]title=|/)Special:(ListFiles|PrefixIndex).*&amp;
+^https?://{any_start_netloc}/.+([\?&]title=|/)Special:ListFiles.*&user=
+^https?://{any_start_netloc}/.+([\?&]title=|/)Special:Log/
+^https?://{any_start_netloc}/.+[\?&]action=edit&section=(\d+|new)
+^https?://{any_start_netloc}/.+[\?&]feed(format)?=atom
+^https?://{any_start_netloc}/.+[\?&]printable=yes
+^https?://{any_start_netloc}/.+[\?&]mobileaction=
+^https?://{any_start_netloc}/.+[\?&]undo(after)?=\d+
+^https?://{any_start_netloc}/.+[\?&]lqt_method=
+^https?://{any_start_netloc}/.+[\?&]redlink=1
+^https?://{any_start_netloc}/.*User_talk:.+/User_talk:
+^https?://{any_start_netloc}/.*User_blog:.+/User_blog:
+^https?://{any_start_netloc}/.*User:.+/User:
+^https?://*\.meetup\.com/login/
+^https?://(\d|secure)\.gravatar\.com/avatar/
+^https?://[^/]+\.onion/
+\?C=[NMSD];O=[AD]$
+^https?://www\.pinterest\.com/[^/]+/\^/[^/]+/
+^https?://www\.pinterest\.com/[^/]+/[^/]+/\^/[^/]+/
+^https?://www\.pinterest\.com/[^/]+/[^/]+\.[^/]+
+^https?://www\.pinterest\.com/[^/]+/[^/]+/[^/]+\.[^/]+
+^https?://www\.pinterest\.com/[^/]+/webapp/js/app/(desktop|common)/bundle-(jcrop|mapbox)\.js
+^https?://www\.pinterest\.com/[^/]+/[^/]+/webapp/js/app/(desktop|common)/bundle-(jcrop|mapbox)\.js
+^https?://(www|old)\.reddit\.com/gold\?goldtype=
+^https?://(www|old)\.reddit\.com/r/[^/]+/.*[\?&]utm_
+^https?://(www|old)\.reddit\.com/r/[^/]+/comments/[a-z0-9]+/[^/]+/[a-z0-9]+
+^https?://(www|old)\.reddit\.com/r/[^/]+/comments/[a-z0-9]+.*\?sort=
+^https?://(www|old)\.reddit\.com/r/[^/]+/comments/[a-z0-9]+/[^/]+/\.compact
+^https?://(www|old)\.reddit\.com/r/[^/]+/(top|new|rising|controversial|gilded|ads)/.+[\?&]after=
+^https?://(www|old)\.reddit\.com/r/[^/]+/related/
+^https?://(www|old)\.reddit\.com/r/[^/]+/(gilded)?\.mobile\?
+^https?://(www|old)\.reddit\.com/r/[^/]+/search/?\?
+^https?://(www|old)\.reddit\.com/r/[^/]+/wiki/(revisions|discussions)/user/.+
+^https?://(www|old)\.reddit\.com/user/[^/]+/(comments/)?.+[\?&]sort=
+^https?://(www|old)\.reddit\.com/.+/\.rss$
+\.reddit\.com/message/compose/?\?
+^https?://(m|out|simple|amp)\.reddit\.com/
+^https?://[^/]+\.tumblr\.com/$
+^https?://((?:www|mobile)\.)?twitter\.com/.+[\?&](?:id|lang|locale|screen_name|nav)=
+^https?://mobile\.twitter\.com/i/anonymize\?data=
+\.?youtube\.com/user/[^/]+/(playlists|channels|videos)\?(flow|view|sort|live_view)=

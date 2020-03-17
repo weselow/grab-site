@@ -4,9 +4,9 @@
 # space crosses a threshold value.  Modify the values below.
 
 # Default: 80GB
-LOW_DISK_KB=$((15 * 1024 * 1024))
-PARTITION=/mnt/vdrive/
-CHECK_INTERVAL_SEC=60
+LOW_DISK_KB=$((15 * 1024 * 1024))	# 15 Gb
+PARTITION=/mnt/vdrive/cyberlab
+CHECK_INTERVAL_SEC=1200		# every 20 min
 
 # Track whether *we* paused the grab-sites to avoid (typically) resuming
 # grab-sites that were paused by the user with e.g. ctrl-z

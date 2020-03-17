@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run Crawler
-# v 1.0.4
+# v 1.0.5
 # Grab-site Options
 # source: https://github.com/ArchiveTeam/grab-site
 #
@@ -161,14 +161,14 @@ if [[ "${IfMoveToCloud}" == "true"  ]]; then
 		# if cloud mounted
 		echo "Cloud is mounted, continue ..."
 		# mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/
-		/usr/bin/rclone move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}
+		/usr/bin/rclone --drive-stop-on-upload-limit moveto ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/${Hostname}/${domain}_${domainid}
 
 	else
 		# if cloud unmounted, save job to file
 		echo "CloudRepo is unmounted, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 
 		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
-		echo "/usr/bin/rclone move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}" >> ${LocalRepoDir}/job_${domain}.sh
+		echo "/usr/bin/rclone --drive-stop-on-upload-limit moveto ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
 		echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
 		chmod +x ${LocalRepoDir}/job_${domain}.sh
 		${LocalRepoDir}/job_${domain}.sh &
@@ -180,7 +180,7 @@ else
 	echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 
 	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
-	echo "/usr/bin/rclone move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}" >> ${LocalRepoDir}/job_${domain}.sh
+	echo "/usr/bin/rclone --drive-stop-on-upload-limit moveto ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
 	echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
 	chmod +x ${LocalRepoDir}/job_${domain}.sh
 fi

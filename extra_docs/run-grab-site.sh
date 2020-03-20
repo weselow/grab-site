@@ -28,7 +28,7 @@ function LoadSettings {
 				DoneDir="${BaseDir}/${Hostname}/Done"
 				LocalRepoDir="${BaseDir}/LocalRepo"
 				TempDir="${BaseDir}/tmp/${domain}"
-				
+
 				echo "BaseDir = $BaseDir"
 				echo "NotStartedDir = $NotStartedDir"
 				echo "InProgressDir = $InProgressDir"
@@ -94,12 +94,13 @@ echo "Staring grabbing $domain ..."
 grab-site --level=3 \
 	--concurrency=3 \
 	--delay 1 \
+	--no-offsite-links \
 	--ua="$UserAgent" \
 	--id=$domainid \
 	--dir=$TempDir \
 	--finished-warc-dir=$OutputDir \
 	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \
-	http://$domain  2>> $LogErrorFile >> $LogFile
+	http://${domain} https://${domain} http://www.${domain} https://www.${domain}  2>> $LogErrorFile >> $LogFile
 
 echo "Finishing grabbing $domain ..."
 sleep 5
@@ -110,11 +111,11 @@ grab-site --1 \
 	--concurrency=3 \
 	--delay 1 \
 	--ua="$UserAgent" \
-	--id=${id}1 \
+	--id=${domainid}_1 \
 	--dir=${TempDir}/homepage \
 	--finished-warc-dir=$ExportDir/${domain}_${domainid}/homepage \
 	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \
-	http://$domain  2>> $LogErrorFile >> $LogFile
+	http://${domain} https://${domain} http://www.${domain} https://www.${domain}  2>> $LogErrorFile >> $LogFile
 
 echo "Finishing grabbing $domain homepage..."
 sleep 5
@@ -161,14 +162,15 @@ if [[ "${IfMoveToCloud}" == "true"  ]]; then
 		# if cloud mounted
 		echo "Cloud is mounted, continue ..."
 		# mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/
-		/usr/bin/rclone --drive-stop-on-upload-limit moveto ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/${Hostname}/${domain}_${domainid}
+		/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs
+		rm -R ${LocalRepoDir}/${domain}_${domainid}
 
 	else
 		# if cloud unmounted, save job to file
 		echo "CloudRepo is unmounted, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 
 		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
-		echo "/usr/bin/rclone --drive-stop-on-upload-limit moveto ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
+		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs" >> ${LocalRepoDir}/job_${domain}.sh
 		echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
 		chmod +x ${LocalRepoDir}/job_${domain}.sh
 		${LocalRepoDir}/job_${domain}.sh &
@@ -179,8 +181,8 @@ else
 	# if cloud unmounted, save job to file
 	echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 
-	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
-	echo "/usr/bin/rclone --drive-stop-on-upload-limit moveto ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/${Hostname}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
+	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
+	echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs" >> ${LocalRepoDir}/job_${domain}.sh
 	echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
 	chmod +x ${LocalRepoDir}/job_${domain}.sh
 fi

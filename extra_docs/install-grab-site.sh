@@ -11,7 +11,7 @@ sleep 10
 chmod +x pyenv-installer
 ./pyenv-installer
 ~/.pyenv/bin/pyenv install 3.7.5
-echo "PATH=\"$PATH:$HOME/gs-venv/bin\"" >> ~/.bashrc
+echo 'PATH=\"$PATH:$HOME/gs-venv/bin\"' >> ~/.bashrc
 
 echo
 echo Pause...
@@ -27,5 +27,6 @@ sleep 10
 
 sudo ln -s /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite /home/viking01/grab-site-options
 
-# rm /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite/ignore_sets/global
-# cp global2 /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite/ignore_sets/global
+echo "Merging global2 ignore list ..."
+rm /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite/ignore_sets/global
+cp global2 /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite/ignore_sets/global

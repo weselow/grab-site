@@ -165,8 +165,8 @@ if [[ "${IfMoveToCloud}" == "true"  ]]; then
 		# if cloud unmounted, save job to file
 		echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
-		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs && rm -R ${LocalRepoDir}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
-		chmod +x ${LocalRepoDir}/job_${domain}.sh 
+		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs && rm -R ${LocalRepoDir}/${domain}_${domainid} && rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
+		chmod +x ${LocalRepoDir}/job_${domain}.sh
 fi
 echo "Moving to CloudRepo ... done!"
 

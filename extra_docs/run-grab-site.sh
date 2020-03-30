@@ -69,6 +69,7 @@ sleep 5
 
 # Creating Dirs
 echo Checking output directories...
+if ! [ -d "${BaseDir}/tmp" ]; then echo ... Creating TempDir: ${BaseDir}/tmp/; mkdir ${BaseDir}/tmp ; fi
 if [ -d "$TempDir" ]; then rm -R $TempDir ; fi
 if ! [ -d "$ExportDir" ]; then echo ... Creating ExportDir: $exportdir; mkdir $ExportDir ; fi
 if ! [ -d "$ExportDir/${domain}_${domainid}" ]; then mkdir "$ExportDir/${domain}_${domainid}" ; fi
@@ -155,37 +156,20 @@ echo "... done"
 
 # Move from LocalRepo to Seafile
 if [[ "${IfMoveToCloud}" == "true"  ]]; then
-
-	echo "Moving to CloudRepo ..."
-#	if  [[ -d "$CloudRepo" ]]; then
-	if  [[ "true" == "true" ]]; then
-		# if cloud mounted
-		echo "Cloud is mounted, continue ..."
-		# mv ${LocalRepoDir}/${domain}_${domainid}/ $CloudRepo/
-		/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs
-		rm -R ${LocalRepoDir}/${domain}_${domainid}
-
+		echo "Moving to CloudRepo ..."
+		/usr/bin/rclone --drive-stop-on-upload-limit move \
+				${LocalRepoDir}/${domain}_${domainid} \
+				${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs \
+				&& rm -R ${LocalRepoDir}/${domain}_${domainid}
 	else
 		# if cloud unmounted, save job to file
-		echo "CloudRepo is unmounted, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
-
-		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh		 
-		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs" >> ${LocalRepoDir}/job_${domain}.sh
-		echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
-		chmod +x ${LocalRepoDir}/job_${domain}.sh
-		${LocalRepoDir}/job_${domain}.sh &
-	fi
-
-	echo "... done!"
-else
-	# if cloud unmounted, save job to file
-	echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
-
-	echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
-	echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid}/ ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs" >> ${LocalRepoDir}/job_${domain}.sh
-	echo "rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
-	chmod +x ${LocalRepoDir}/job_${domain}.sh
+		echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
+		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
+		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs && rm -R ${LocalRepoDir}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
+		chmod +x ${LocalRepoDir}/job_${domain}.sh 
 fi
+echo "Moving to CloudRepo ... done!"
+
 
 # Check if TempDir contains no warc files
 # and delete TempDir

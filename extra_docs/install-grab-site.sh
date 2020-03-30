@@ -11,7 +11,7 @@ sleep 10
 chmod +x pyenv-installer
 ./pyenv-installer
 ~/.pyenv/bin/pyenv install 3.7.5
-echo 'PATH=\"$PATH:$HOME/gs-venv/bin\"' >> ~/.bashrc
+echo 'PATH="$PATH:$HOME/gs-venv/bin"' >> ~/.bashrc
 
 echo
 echo Pause...
@@ -21,10 +21,7 @@ sleep 10
 ~/gs-venv/bin/pip install --no-binary lxml --upgrade git+https://github.com/ArchiveTeam/grab-site
 ~/gs-venv/bin/pip install html5lib psutil
 
-# add global stop list
-# global2
 # add symlink to grab-site settings dir
-
 sudo ln -s /home/viking01/gs-venv/lib/python3.7/site-packages/libgrabsite /home/viking01/grab-site-options
 
 echo "Merging global2 ignore list ..."

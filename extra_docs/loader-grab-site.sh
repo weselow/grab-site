@@ -9,8 +9,8 @@ JobsCounter=0
 function LoadSettings {
 	if [[ -e "loader.ini" ]]; then		
 		while read a b ; do
-			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
-			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; echo Hostname = $Hostname;  fi
+			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; fi
+			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; fi
 			if [[ "$a" == "BaseDir" ]]; then
 				BaseDir="$b"
 				NotStartedDir="${BaseDir}/${Hostname}/NotStarted"
@@ -25,6 +25,8 @@ function LoadSettings {
 
 		if [[ "$DebugMode" == "true" ]]; then
 			echo '*** START setting variables ***'
+			echo "MaxTasks = $MaxTasks"
+			echo "Hostname = $Hostname"
 			echo "BaseDir = $BaseDir"
 			echo "NotStartedDir = $NotStartedDir"
 			echo "InProgressDir = $InProgressDir"

@@ -7,29 +7,38 @@ JobsCounter=0
 
 # Functions start
 function LoadSettings {
-	if [[ -e "loader.ini" ]]; then
-		echo '*** START setting variables ***'
+	if [[ -e "loader.ini" ]]; then		
 		while read a b ; do
-			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
-			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; echo Hostname = $Hostname;  fi
+			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; fi
+			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; fi
 			if [[ "$a" == "BaseDir" ]]; then
 				BaseDir="$b"
 				NotStartedDir="${BaseDir}/${Hostname}/NotStarted"
 				InProgressDir="${BaseDir}/${Hostname}/InProgress"
 				DoneDir="${BaseDir}/${Hostname}/Done"
 				LogDir="${BaseDir}/logs"
-				
-				echo "BaseDir = $BaseDir"
-				echo "NotStartedDir = $NotStartedDir"
-				echo "InProgressDir = $InProgressDir"
-				echo "DoneDir = $DoneDir"
-				echo "LogDir = $LogDir"
 			fi
-
-			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo "MyProcess = $MyProcess";  fi
-			if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; echo "RunScriptDir = $RunScriptDir";  fi
+			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; fi
+			if [[ "$a" == "RunScriptDir" ]]; then RunScriptDir="$b"; fi
+			if [[ "$a" == "DebugMode" ]]; then DebugMode="$b"; fi
 		done < loader.ini
-		echo '*** END setting variables***'
+
+		if [[ "$DebugMode" == "true" ]]; then
+			echo '*** START setting variables ***'
+			echo "MaxTasks = $MaxTasks"
+			echo "Hostname = $Hostname"
+			echo "BaseDir = $BaseDir"
+			echo "NotStartedDir = $NotStartedDir"
+			echo "InProgressDir = $InProgressDir"
+			echo "DoneDir = $DoneDir"
+			echo "LogDir = $LogDir"
+			echo "MyProcess = $MyProcess"
+			echo "RunScriptDir = $RunScriptDir"
+			echo "DebugMode = $DebugMode"
+			echo '*** END setting variables***'			
+		fi
+
+		
 	fi
 }
 # Functions end

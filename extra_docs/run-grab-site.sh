@@ -17,10 +17,10 @@ FileNotStarted=$3
 # Functions start
 function LoadSettings {
 	if [[ -e "loader.ini" ]]; then
-		echo '*** START setting variables ***'
+		
 		while read a b ; do
-			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; echo MaxTasks = $MaxTasks;  fi
-			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; echo Hostname = $Hostname;  fi
+			if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; fi
+			if [[ "$a" == "Hostname" ]]; then Hostname="$b"; fi
 			if [[ "$a" == "BaseDir" ]]; then
 				BaseDir="$b"
 				NotStartedDir="${BaseDir}/${Hostname}/NotStarted"
@@ -29,36 +29,45 @@ function LoadSettings {
 				LocalRepoDir="${BaseDir}/LocalRepo"
 				TempDir="${BaseDir}/tmp/${domain}"
 
-				echo "BaseDir = $BaseDir"
-				echo "NotStartedDir = $NotStartedDir"
-				echo "InProgressDir = $InProgressDir"
-				echo "DoneDir = $DoneDir"
-				echo "LocalRepoDir = $LocalRepoDir"
-				echo "TempDir = $TempDir"
-
 				FileInProgress="${InProgressDir}/${domain}.txt"
-				echo "FileInProgress = $FileInProgress"
 
 				ExportDir="${BaseDir}/export_grab-site"
 				dt=$(date +"%Y-%m-%d")
-				OutputDir="${ExportDir}/${domain}_${domainid}/${dt}"
-				echo "OutputDir = $OutputDir"
+				OutputDir="${ExportDir}/${domain}_${domainid}/${dt}"				
 
 				LogDir="${BaseDir}/logs"
 				LogFile="${LogDir}/$domain.log"
-				LogErrorFile="${LogDir}/${domain}_errors.log"
-				echo "LogDir = $LogDir"
-				echo "LogFile = $LogFile"
-				echo "LogErrorFile = $LogErrorFile"
+				LogErrorFile="${LogDir}/${domain}_errors.log"				
 			fi
 
-			if [[ "$a" == "CloudRepo" ]]; then CloudRepo="$b"; echo "CloudRepo = $CloudRepo";  fi
-			if [[ "$a" == "IfMoveToCloud" ]]; then IfMoveToCloud="$b"; echo "IfMoveToCloud = $IfMoveToCloud";  fi
-			if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; echo "UserAgent = $UserAgent";  fi
-			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; echo "MyProcess = $MyProcess";  fi
-
+			if [[ "$a" == "CloudRepo" ]]; then CloudRepo="$b"; fi
+			if [[ "$a" == "IfMoveToCloud" ]]; then IfMoveToCloud="$b"; fi
+			if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; fi
+			if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; fi
+			if [[ "$a" == "DebugMode" ]]; then DebugMode="$b"; fi
 		done < loader.ini
-		echo '*** END setting variables***'
+
+		if [[ "$DebugMode" == "true" ]]; then
+			echo '*** START setting variables ***'
+			echo "MaxTasks = $MaxTasks"
+			echo "Hostname = $Hostname"
+			echo "BaseDir = $BaseDir"
+			echo "NotStartedDir = $NotStartedDir"
+			echo "InProgressDir = $InProgressDir"
+			echo "DoneDir = $DoneDir"
+			echo "LocalRepoDir = $LocalRepoDir"
+			echo "TempDir = $TempDir"
+			echo "FileInProgress = $FileInProgress"
+			echo "OutputDir = $OutputDir"
+			echo "LogDir = $LogDir"
+			echo "LogFile = $LogFile"
+			echo "LogErrorFile = $LogErrorFile"
+			echo "CloudRepo = $CloudRepo"
+			echo "IfMoveToCloud = $IfMoveToCloud"
+			echo "UserAgent = $UserAgent"
+			echo "MyProcess = $MyProcess"
+			echo '*** END setting variables***'
+		fi		
 	fi
 }
 # Functions end
@@ -130,45 +139,41 @@ if ! [[ -z "$(cat $LogErrorFile | grep RuntimeError )" ]]; then
 fi
 
 
-
-
-
-
-
 # Move InProgress task to Done task
-echo "Moving $FileInProgress to DoneDir ..."
 mv  $FileInProgress ${DoneDir}/
+echo "Moving $FileInProgress to DoneDir ... done!"
 
 # Move finished-warc-dir=$OutputDir to local repo
-echo "Moving $domain to LocalRepoDir ..."
 mv $ExportDir/${domain}_${domainid}/ ${LocalRepoDir}/
-echo "... done"
+echo "Moving $domain to LocalRepoDir ... done!"
 sleep 3
 
 # Move logs files to local repo $LogErrorFile $LogFile
-if ! [ -d "${LocalRepoDir}/logs" ]; then echo "... Creating LocalRepoLogs dir: ${LocalRepoDir}/logs"; mkdir ${LocalRepoDir}/logs ; fi
-echo "Moving $LogFile to LocalRepoDir ..."
+if ! [ -d "${LocalRepoDir}/logs" ]; then 
+	echo "... Creating LocalRepoLogs dir: ${LocalRepoDir}/logs" 
+	mkdir ${LocalRepoDir}/logs  
+fi
 mv $LogFile ${LocalRepoDir}/logs/
-echo "... done"
-echo "Moving $LogErrorFile to LocalRepoDir ..."
 mv $LogErrorFile ${LocalRepoDir}/logs/
-echo "... done"
+echo "Moving ${LogFile}, ${LogErrorFile} to LocalRepoDir ... done!"
+
 
 # Move from LocalRepo to Seafile
-if [[ "${IfMoveToCloud}" == "true"  ]]; then
-		echo "Moving to CloudRepo ..."
+if [[ "${IfMoveToCloud}" == "true"  ]]; then		
 		/usr/bin/rclone --drive-stop-on-upload-limit move \
 				${LocalRepoDir}/${domain}_${domainid} \
 				${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs \
 				&& rm -R ${LocalRepoDir}/${domain}_${domainid}
+		echo "Moving ${domain} to CloudRepo ... done!"
 	else
-		# if cloud unmounted, save job to file
-		echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
+		# save command to file
+		# echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
 		echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
-		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs && rm -R ${LocalRepoDir}/${domain}_${domainid}" >> ${LocalRepoDir}/job_${domain}.sh
-		chmod +x ${LocalRepoDir}/job_${domain}.sh 
+		echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs && rm -R ${LocalRepoDir}/${domain}_${domainid} && rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
+		chmod +x ${LocalRepoDir}/job_${domain}.sh
+		echo "Saving job to file job_${domain}.sh ... done!"
 fi
-echo "Moving to CloudRepo ... done!"
+
 
 
 # Check if TempDir contains no warc files
@@ -183,27 +188,15 @@ while [[ $COUNTER -lt  "60" ]]; do
 	let "COUNTER += 1"
 	sleep 1m
 done
-
-echo ... TempDir "$TempDir" does not contains war.gz, deleting ...
 rm -R $TempDir
-echo "... done!"
-
-
-
-
+echo "TempDir "$TempDir" does not contains war.gz, deleting ... done!"
 
 # Finish
 echo "[RUNNER] The task $domain is done!"
 echo
 
 
-
 # exec 1>&6 6>&- # Reset stdout and close description #6.
-
-
-
-
-
 
 
 # ***

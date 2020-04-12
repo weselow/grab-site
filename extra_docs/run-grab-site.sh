@@ -19,7 +19,7 @@ FileNotStarted=$3
 # ---------------------
 function LoadSettings {
     if [[ -e "loader.ini" ]]; then
-        
+
         while read a b ; do
             if [[ "$a" == "MaxTasks" ]]; then MaxTasks="$b"; fi
             if [[ "$a" == "Hostname" ]]; then Hostname="$b"; fi
@@ -35,11 +35,11 @@ function LoadSettings {
 
                 ExportDir="${BaseDir}/export_grab-site"
                 dt=$(date +"%Y-%m-%d")
-                OutputDir="${ExportDir}/${domain}_${domainid}/${dt}"                
+                OutputDir="${ExportDir}/${domain}_${domainid}/${dt}"
 
                 LogDir="${BaseDir}/logs"
                 LogFile="${LogDir}/$domain.log"
-                LogErrorFile="${LogDir}/${domain}_errors.log"                
+                LogErrorFile="${LogDir}/${domain}_errors.log"
             fi
 
             if [[ "$a" == "CloudRepo" ]]; then CloudRepo="$b"; fi
@@ -69,7 +69,7 @@ function LoadSettings {
             echo "UserAgent = $UserAgent"
             echo "MyProcess = $MyProcess"
             echo '*** END setting variables***'
-        fi        
+        fi
     fi
 }
 # Functions end
@@ -163,9 +163,9 @@ echo "Moving $domain to LocalRepoDir ... done!"
 sleep 3
 
 # Move logs files to local repo $LogErrorFile $LogFile
-if ! [ -d "${LocalRepoDir}/logs" ]; then 
-    echo "... Creating LocalRepoLogs dir: ${LocalRepoDir}/logs" 
-    mkdir ${LocalRepoDir}/logs  
+if ! [ -d "${LocalRepoDir}/logs" ]; then
+    echo "... Creating LocalRepoLogs dir: ${LocalRepoDir}/logs"
+    mkdir ${LocalRepoDir}/logs
 fi
 mv $LogFile ${LocalRepoDir}/logs/
 mv $LogErrorFile ${LocalRepoDir}/logs/
@@ -173,7 +173,7 @@ echo "Moving ${LogFile}, ${LogErrorFile} to LocalRepoDir ... done!"
 
 
 # Move from LocalRepo to Seafile
-if [[ "${IfMoveToCloud}" == "true"  ]]; then        
+if [[ "${IfMoveToCloud}" == "true"  ]]; then
         /usr/bin/rclone --drive-stop-on-upload-limit move \
                 ${LocalRepoDir}/${domain}_${domainid} \
                 ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs \
@@ -182,8 +182,14 @@ if [[ "${IfMoveToCloud}" == "true"  ]]; then
     else
         # save command to file
         # echo "IfMoveToCloud set to FALSE, saving job to file: ${LocalRepoDir}/job_${domain}.sh"
-        echo '#!/bin/bash' > ${LocalRepoDir}/job_${domain}.sh
-        echo "/usr/bin/rclone --drive-stop-on-upload-limit move ${LocalRepoDir}/${domain}_${domainid} ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs && rm -R ${LocalRepoDir}/${domain}_${domainid} && rm ${LocalRepoDir}/job_${domain}.sh" >> ${LocalRepoDir}/job_${domain}.sh
+        cat > ${LocalRepoDir}/job_${domain}.sh << EOF
+#!/bin/bash
+/usr/bin/rclone --drive-stop-on-upload-limit move \
+   ${LocalRepoDir}/${domain}_${domainid} \
+   ${CloudRepo}/TempFiles/${Hostname}/${domain}_${domainid} --delete-empty-src-dirs \
+&& rm -R ${LocalRepoDir}/${domain}_${domainid} \
+&& rm ${LocalRepoDir}/job_${domain}.sh
+EOF
         chmod +x ${LocalRepoDir}/job_${domain}.sh
         echo "Saving job to file job_${domain}.sh ... done!"
 fi

@@ -70,9 +70,7 @@ while [[ "$(ps -ela | grep grab | wc -l)" -gt "0" ]]; do
                 # counter=$(ls -R ${ExportDir}/${i}/ | grep warc | wc -l)
                 counter=$(find ${ExportDir}/${i}/ -name '*.warc*'| wc -l)
                 if [[ "${counter}" -gt "0" ]]; then            
-                    echo Moving ${i} 
-                    /usr/bin/rclone --drive-stop-on-upload-limit copy ${ExportDir}/${i} gdrive01:/TempCleanDrive/${i}
-                    
+                    echo Moving ${i}                     
                     /usr/bin/rclone --drive-stop-on-upload-limit copy \
                         ${ExportDir}/${i} \
                         ${CloudRepo}/TempFiles/${Hostname}/${i}

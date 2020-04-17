@@ -43,6 +43,7 @@ function LoadSettings {
             fi
 
             if [[ "$a" == "CloudRepo" ]]; then CloudRepo="$b"; fi
+            if [[ "$a" == "Quota" ]]; then Quota="$b"; fi
             if [[ "$a" == "IfMoveToCloud" ]]; then IfMoveToCloud="$b"; fi
             if [[ "$a" == "UserAgent" ]]; then UserAgent="$b"; fi
             if [[ "$a" == "MyProcess" ]]; then MyProcess="$b"; fi
@@ -68,6 +69,7 @@ function LoadSettings {
             echo "IfMoveToCloud = $IfMoveToCloud"
             echo "UserAgent = $UserAgent"
             echo "MyProcess = $MyProcess"
+            echo "Quota = $Quota"
             echo '*** END setting variables***'
         fi
     fi
@@ -119,10 +121,10 @@ grab-site --level=3 \
     --delay 1 \
     --no-offsite-links \
     --ua="$UserAgent" \
-    --id=$domainid \
-    --dir=$TempDir \
-    --finished-warc-dir=$OutputDir \
-    --wpull-args="--strip-session-id \"--html-parser html5lib\"" \
+    --id=${domainid} \
+    --dir=${TempDir} \
+    --finished-warc-dir=${OutputDir} \
+    --wpull-args="--strip-session-id \"--html-parser html5lib\" \"--quota ${Quota}\"" \
     http://${domain} https://${domain} http://www.${domain} https://www.${domain}  2>> $LogErrorFile >> $LogFile
 
 echo "Finishing grabbing $domain ..."

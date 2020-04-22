@@ -77,6 +77,7 @@ function CreateTaskFile {
 	LogFile=${LogDir}/${domain}.log
 	LogErrorFile=${LogDir}/${domain}_errors.log
 	ScreenshotDir=${ExportDir}/${domain}_${domainid}
+	UrlFile=${BaseDir}/tmp/${domain}.url
 
 	cat > $FileInProgress << EOF
 #!/bin/bash
@@ -118,7 +119,7 @@ if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_http-pure.png" ]]; then
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_http-wwww.png" ]]; then
 	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
-		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_http-wwww.png \\
+		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_http-www.png \\
 		http://www.${domain} 2>> $LogErrorFile >> $LogFile
 	sleep 2
 fi
@@ -130,13 +131,19 @@ if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_https-pure.png" ]]; then
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_https-wwww.png" ]]; then
 	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
-		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_https-wwww.png \\
+		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_https-www.png \\
 		https://www.${domain} 2>> $LogErrorFile >> $LogFile
 	sleep 2
 fi
 
 # Run full site crawler
 echo "Staring grabbing $domain ..."
+
+echo "http://${domain}" > ${UrlFile}
+echo "https://${domain}" >> ${UrlFile}
+echo "http://www.${domain}" >> ${UrlFile}
+echo "https://www.${domain}" >> ${UrlFile}
+
 grab-site --level=3 \\
 	--concurrency=3 \\
 	--delay 1 \\
@@ -146,24 +153,26 @@ grab-site --level=3 \\
 	--dir=${TempDir} \\
 	--finished-warc-dir=${OutputDir} \\
 	--wpull-args="--strip-session-id \"--html-parser html5lib\" \"-Q ${Quota}\"" \\
-	http://${domain} https://${domain} http://www.${domain} https://www.${domain}  2>> $LogErrorFile >> $LogFile
+	--input-file ${UrlFile} 2>> $LogErrorFile >> $LogFile
 
 echo "[TASK] Finishing grabbing $domain ..."
 sleep 5
 
 # Run home page crawler
 echo "[TASK] Staring grabbing $domain homepage..."
+
 grab-site --1 \\
 	--concurrency=3 \\
 	--delay 1 \\
 	--ua=${UserAgent} \\
-	--id=${domainid}_1 \\
+	--id=${domainid}-homepage \\
 	--dir=${TempDir}/homepage \\
 	--finished-warc-dir=$ExportDir/${domain}_${domainid}/homepage \\
 	--wpull-args="--strip-session-id \"--html-parser html5lib\"" \\
-	http://${domain} https://${domain} http://www.${domain} https://www.${domain}  2>> $LogErrorFile >> $LogFile
+	--input-file ${UrlFile}  2>> $LogErrorFile >> $LogFile
 
 echo "[TASK] Finishing grabbing $domain homepage..."
+rm ${UrlFile}
 sleep 5
 
 # Check if there were errors during crawling
@@ -271,11 +280,11 @@ function  MoveUnfinishedToCloudFile {
 while [[ "\$(ps -ela | grep grab | wc -l)" -gt "0" ]]; do
     for domainDir in \$(ls ${ExportDir}/ )
         do
-        	for SubDir in \$(ls \${domainDir})
+        	for SubDir in \$(ls ${ExportDir}/\${domainDir})
         	do
-        		for file in \$(ls \${SubDir})
+        		for file in \$(ls ${ExportDir}/\${domainDir}/\${SubDir})
         		do
-        			if [[ \${file} == *".warc"* ]]; then
+        			if [[ ${ExportDir}/\${domainDir}/\${SubDir}/\${file} == *".warc"* ]]; then
         				/usr/bin/rclone --drive-stop-on-upload-limit moveto \\
         				    ${ExportDir}/\${domainDir}/\${SubDir}/\${file} \\
         				    ${CloudRepo}/TempFiles/${Hostname}/\${domainDir}/\${SubDir}/\${file}
@@ -382,8 +391,9 @@ fi
 
 echo "[LOADER] Creating StopTasksFile ..."
 StopTasksFile=/home/viking01/stop-all-tasks.sh
-chmod +x ${StopTasksFile}
 StopAllTasksFile
+chmod +x ${StopTasksFile}
+
 
 # -----------------------------
 # -- Resume InProgress tasks --

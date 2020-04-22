@@ -111,25 +111,25 @@ echo "Date: $dt" >> $LogErrorFile
 # Get site screenshots
 sdate=\$(date +"%Y-%m-%d")
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_http-pure.png" ]]; then
-	usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_http-pure.png \\
 		http://${domain} 2>> $LogErrorFile >> $LogFile
 	sleep 2
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_http-wwww.png" ]]; then
-	usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_http-wwww.png \\
 		http://www.${domain} 2>> $LogErrorFile >> $LogFile
 	sleep 2
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_https-pure.png" ]]; then
-	usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_https-pure.png \\
 		https://${domain} 2>> $LogErrorFile >> $LogFile
 	sleep 2
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_https-wwww.png" ]]; then
-	usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_https-wwww.png \\
 		https://www.${domain} 2>> $LogErrorFile >> $LogFile
 	sleep 2
@@ -145,7 +145,7 @@ grab-site --level=3 \\
 	--id=${domainid} \\
 	--dir=${TempDir} \\
 	--finished-warc-dir=${OutputDir} \\
-	--wpull-args="--strip-session-id \"--html-parser html5lib\" \"--quota ${Quota}\"" \\
+	--wpull-args="--strip-session-id \"--html-parser html5lib\" \"-Q ${Quota}\"" \\
 	http://${domain} https://${domain} http://www.${domain} https://www.${domain}  2>> $LogErrorFile >> $LogFile
 
 echo "[TASK] Finishing grabbing $domain ..."
@@ -269,26 +269,41 @@ function  MoveUnfinishedToCloudFile {
 	cat > ${MoveUnfinishedFile} << EOF
 #!/bin/bash
 while [[ "\$(ps -ela | grep grab | wc -l)" -gt "0" ]]; do
-    for i in \$(ls ${ExportDir}/)
+    for domainDir in \$(ls ${ExportDir}/ )
         do
-            counter=\$(find ${ExportDir}/\${i}/ -name '*.warc*'| wc -l)
-            if [[ "\${counter}" -gt "0" ]]; then
-                /usr/bin/rclone --drive-stop-on-upload-limit copy \\
-                    ${ExportDir}/\${i} \\
-                    ${CloudRepo}/TempFiles/${Hostname}/\${i}
-
-               for j in \$(find ${ExportDir}/\${i}/ -name '*.warc*')
-                    do
-                       rm \${j}
-                    done
-            fi
+        	for SubDir in \$(ls \${domainDir})
+        	do
+        		for file in \$(ls \${SubDir})
+        		do
+        			if [[ \${file} == *".warc"* ]]; then
+        				/usr/bin/rclone --drive-stop-on-upload-limit moveto \\
+        				    ${ExportDir}/\${domainDir}/\${SubDir}/\${file} \\
+        				    ${CloudRepo}/TempFiles/${Hostname}/\${domainDir}/\${SubDir}/\${file}
+        			fi
+        		done
+        	done
         done
     sleep 10m
 done
 EOF
-
 }
 # Functions MoveUnfinishedToCloudFile End
+
+# -----------------------------
+# -- Functions StopAllTasksFile --
+# -----------------------------
+
+function  StopAllTasksFile {
+	cat > ${StopTasksFile} << EOF
+#!/bin/bash
+for i in \$(ls ${BaseDir}/tmp/)
+do
+	echo "   " >>  ${BaseDir}/tmp/\${i}/stop
+done
+EOF
+}
+
+# Functions StopAllTasksFile End
 
 
 
@@ -361,7 +376,14 @@ if [[ "${IfMoveToCloud}" == "true"  ]]; then
 	fi
 fi
 
+# -----------------------------
+# -- Run StopAllTasksFile --
+# -----------------------------
 
+echo "[LOADER] Creating StopTasksFile ..."
+StopTasksFile=/home/viking01/stop-all-tasks.sh
+chmod +x ${StopTasksFile}
+StopAllTasksFile
 
 # -----------------------------
 # -- Resume InProgress tasks --
@@ -372,9 +394,9 @@ if [ -z "$(ps -ela | grep grab-site)" ]; then
 	echo "[LOADER] Looks like it is first run, resuming all InProgress tasks ... "
 	for i in $InProgressTasks; do
 		JobsCounter=$(ps -ela | grep $MyProcess | wc -l)
-
 		while [ $JobsCounter -ge $MaxTasks ]
 			do
+				LoadSettings
 				JobsCounter=$(ps -ela | grep $MyProcess | wc -l)
 				echo Wpull jobs counter: $JobsCounter
 				sleep 3
@@ -413,12 +435,13 @@ while [[ true ]]; do
 						# Count background tasks
 						# JobsCounter=$((`ps ax -Ao ppid | grep $MY_PID | wc -l`))
 						JobsCounter=$(ps -ela | grep $MyProcess | wc -l)
-						LoadSettings > /dev/null
+						LoadSettings
 
 						while [ $JobsCounter -ge $MaxTasks ]
 						do
 							# JobsCounter=$(ps ax -Ao ppid | grep $MY_PID | wc -l)
 							JobsCounter=$(ps -ela | grep $MyProcess | wc -l)
+							LoadSettings
 							echo Wpull jobs counter: $JobsCounter
 							sleep 3
 						done

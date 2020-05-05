@@ -81,7 +81,7 @@ while [[ "$(ps -ela | grep grab | wc -l)" -gt "0" ]]; do
                             rm ${j}
                         done
                         
-                    echo
+                    echo  
                 fi
             done
     fi

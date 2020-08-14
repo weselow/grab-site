@@ -70,14 +70,14 @@ function LoadSettings {
 # -- Function CreateTaskFile  --
 # -----------------------------
 function CreateTaskFile {
-	FileInProgress=${InProgressDir}/${domain}.txt
+	FileInProgress=${InProgressDir}/rgtask_${domain}.txt
 	TempDir=${BaseDir}/tmp/${domain}
 	dt=$(date +"%Y-%m-%d")
 	OutputDir=${ExportDir}/${domain}_${domainid}/${dt}
 	LogFile=${LogDir}/${domain}.log
 	LogErrorFile=${LogDir}/${domain}_errors.log
 	ScreenshotDir=${ExportDir}/${domain}_${domainid}
-	UrlFile=${BaseDir}/tmp/${domain}.url
+	UrlFile=${domain}
 
 	cat > $FileInProgress << EOF
 #!/bin/bash
@@ -89,6 +89,21 @@ dt=$(date +"%Y-%m-%d")
 OutputDir=${ExportDir}/${domain}_${domainid}/${dt}
 LogFile=${LogFile}
 LogErrorFile=${LogErrorFile}
+
+function KillAllZombies {
+  tp=\$(pgrep -P \$1)          #get childs pids of parent pid
+  for i in \${tp}; do         #loop through childs
+    if [ -z \${i} ]; then     #check if empty list
+      exit                    #if empty: exit
+    else                      #else
+      echo -n "\${i} "        #print childs pid
+      KillAllZombies \${i}    #call KillAllZombies again with child pid as the parent
+      kill \${i}
+    fi;
+  done
+}
+
+
 
 echo "[TASK] Checking output directories..."
 if ! [ -d "$ExportDir/${domain}_${domainid}" ]; then mkdir "$ExportDir/${domain}_${domainid}" ; fi
@@ -112,27 +127,27 @@ echo "Date: $dt" >> $LogErrorFile
 # Get site screenshots
 sdate=\$(date +"%Y-%m-%d")
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_http-pure.png" ]]; then
-	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --site-per-process --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_http-pure.png \\
-		http://${domain} 2>> $LogErrorFile >> $LogFile
+		http://${domain} 2>> $LogErrorFile >> $LogFile &
 	sleep 2
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_http-wwww.png" ]]; then
-	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --site-per-process --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_http-www.png \\
-		http://www.${domain} 2>> $LogErrorFile >> $LogFile
+		http://www.${domain} 2>> $LogErrorFile >> $LogFile &
 	sleep 2
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_https-pure.png" ]]; then
-	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --site-per-process --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_https-pure.png \\
-		https://${domain} 2>> $LogErrorFile >> $LogFile
+		https://${domain} 2>> $LogErrorFile >> $LogFile &
 	sleep 2
 fi
 if ! [[ -e "${ScreenshotDir}/\${sdate}_${domain}_1024_https-wwww.png" ]]; then
-	/usr/bin/chromium-browser --no-sandbox --headless --disable-gpu \\
+	/usr/bin/chromium-browser --no-sandbox --site-per-process --headless --disable-gpu \\
 		--window-size=1024,768 --screenshot=${ScreenshotDir}/\${sdate}_${domain}_1024_https-www.png \\
-		https://www.${domain} 2>> $LogErrorFile >> $LogFile
+		https://www.${domain} 2>> $LogErrorFile >> $LogFile &
 	sleep 2
 fi
 
@@ -174,6 +189,9 @@ grab-site --1 \\
 echo "[TASK] Finishing grabbing $domain homepage..."
 rm ${UrlFile}
 sleep 5
+
+# Kill all zombies
+KillAllZombies \$\$
 
 # Check if there were errors during crawling
 if [[ -e "$LogErrorFile" ]]; then
@@ -237,6 +255,8 @@ mv  $FileInProgress ${DoneDir}/
 EOF
 
 }
+
+
 # Functions CreateTaskFile End
 
 # -----------------------------
@@ -363,7 +383,7 @@ if [ -z "$(ps -ela | grep pause_resume)" ]
 		pausefile=/home/viking01/pause_resume_grab_sites.sh
 		CreatePauseResumeFile
 		chmod +x ${pausefile}
-		bash  ${pausefile} &
+		${pausefile} &
 	else
 		echo "[LOADER] pause_resume_grab_sites.sh already running, skipping..."
 fi
@@ -379,7 +399,7 @@ if [[ "${IfMoveToCloud}" == "true"  ]]; then
 			MoveUnfinishedFile=/home/viking01/move-unfinished-to-cloud.sh
 			MoveUnfinishedToCloudFile
 			chmod +x ${MoveUnfinishedFile}
-			bash  ${MoveUnfinishedFile} &
+			${MoveUnfinishedFile} &
 		else
 			echo "[LOADER] MoveUnfinishedFile already running, skipping..."
 	fi
@@ -413,7 +433,8 @@ if [ -z "$(ps -ela | grep grab-site)" ]; then
 			done
 
 		echo "[LOADER] ... resuming ${i}"
-		bash ${i} &
+		sudo chmod +x ${i}
+		${i} &
 		sleep 3
 	done
 else
@@ -460,7 +481,8 @@ while [[ true ]]; do
 						echo "Running domain: $domain"
 						CreateTaskFile
 						sleep 1
-						bash ${InProgressDir}/${domain}.txt &
+						sudo chmod +x ${InProgressDir}/rgtask_${domain}.txt
+						${InProgressDir}/rgtask_${domain}.txt &
 						rm $i
 
 				else
